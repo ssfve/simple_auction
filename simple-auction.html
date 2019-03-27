@@ -62,23 +62,20 @@
 
     <div id="response"></div>
 
-    <script type="text/javascript" src="Web3.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ethjs@0.3.4/dist/ethjs.min.js"></script>
+    <script type="text/javascript" src="ethereumjs-testrpc.js"></script>
+    <script type="text/javascript" src="ethjs.js"></script>
     <script type="text/javascript">
-      var eth = new Eth(new Web3.providers.HttpProvider('http://localhost:8545'));
+      var eth = new Eth(TestRPC.provider());
       var el = function(id){ return document.querySelector(id); };
 
-
+      /*
       // uncomment to enable MetaMask support:
       if (typeof window.web3 !== 'undefined' && typeof window.web3.currentProvider !== 'undefined') {
         eth.setProvider(window.web3.currentProvider);
-        console.log("test chain set")
       } else {
-        // web3 = new Web3(new Web3.providers.HttpProvider(“http://localhost:8545”));
-        eth.setProvider("http://localhost:8545");
-        //eth.setProvider(provider); // set to TestRPC if not available
+        eth.setProvider(provider); // set to TestRPC if not available
       }
-
+      */
 
       eth.accounts().then(function(accounts) {
         accounts.forEach(function(address){
