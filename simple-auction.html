@@ -174,13 +174,13 @@
     </script>
 
     <pre><code>
-pragma solidity ^0.4.0;
+pragma solidity >=0.4.22 <0.6.0;
 
 contract SimpleAuction {
   // Parameters of the auction. Times are either
   // absolute unix timestamps (seconds since 1970-01-01)
   // or time periods in seconds.
-  address public beneficiary;
+  address payable public beneficiary;
   uint public auctionStart;
   uint public biddingTime;
 
@@ -206,10 +206,10 @@ contract SimpleAuction {
   /// Create a simple auction with `_biddingTime`
   /// seconds bidding time on behalf of the
   /// beneficiary address `_beneficiary`.
-  function SimpleAuction(
+  constructor(
       uint _biddingTime,
-      address _beneficiary
-  ) {
+      address payable _beneficiary
+  ) public{
     beneficiary = _beneficiary;
     auctionStart = now;
     biddingTime = _biddingTime;
@@ -219,7 +219,7 @@ contract SimpleAuction {
   /// together with this transaction.
   /// The value will only be refunded if the
   /// auction is not won.
-  function bid() payable {
+  function bid() payable public{
     // No arguments are necessary, all
     // information is already part of
     // the transaction. The keyword payable
@@ -228,14 +228,14 @@ contract SimpleAuction {
     if (now > auctionStart + biddingTime) {
       // Revert the call if the bidding
       // period is over.
-      throw;
+      revert();
     }
     if (msg.value <= highestBid) {
       // If the bid is not higher, send the
       // money back.
-      throw;
+      revert();
     }
-    if (highestBidder != 0) {
+    if (highestBidder != address(0)) {
       // Sending back the money by simply using
       // highestBidder.send(highestBid) is a security risk
       // because it can be prevented by the caller by e.g.
@@ -245,12 +245,12 @@ contract SimpleAuction {
     }
     highestBidder = msg.sender;
     highestBid = msg.value;
-    HighestBidIncreased(msg.sender, msg.value);
+    emit HighestBidIncreased(msg.sender, msg.value);
   }
 
   /// Withdraw a bid that was overbid.
-  function withdraw() returns (bool) {
-    var amount = pendingReturns[msg.sender];
+  function withdraw() public returns (bool) {
+    uint256 amount = pendingReturns[msg.sender];
     if (amount > 0) {
       // It is important to set this to zero because the recipient
       // can call this function again as part of the receiving call
@@ -268,7 +268,7 @@ contract SimpleAuction {
 
   /// End the auction and send the highest bid
   /// to the beneficiary.
-  function auctionEnd() {
+  function auctionEnd() public {
     // It is a good guideline to structure functions that interact
     // with other contracts (i.e. they call functions or send Ether)
     // into three phases:
@@ -284,17 +284,18 @@ contract SimpleAuction {
 
     // 1. Conditions
     if (now <= auctionStart + biddingTime)
-      throw; // auction did not yet end
+      revert(); // auction did not yet end
     if (ended)
-      throw; // this function has already been called
+      revert(); // this function has already been called
 
     // 2. Effects
     ended = true;
-    AuctionEnded(highestBidder, highestBid);
+    emit AuctionEnded(highestBidder, highestBid);
 
     // 3. Interaction
     if (!beneficiary.send(highestBid))
-      throw;
+      revert();
   }
 }
+
   </code></pre>
